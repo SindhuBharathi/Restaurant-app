@@ -1,0 +1,15 @@
+
+PR_IS_VALID_INPUT.sql -- Procedure to get input from the user and validate the input
+	The Seat name, Item name list, Item quantity list are the arguments
+		(Temporary table is used to store the item name and its quantity)
+	Order id and the status (Served or not served with the reason) is the output
+
+PR_ADD_ORDER.sql -- Procedure to insert the served items in the transaction table
+
+PR_CANCEL_ORDER.sql -- Procedure to cancel an order before an item in it is served
+	Order id is the argument
+	Status (Cancelled or not with reason) is the output
+
+Example:
+call PR_IS_VALID_INPUT('A','Idly,Dosa,Vada','5,10,5')
+call PR_CANCEL_ORDER(1)
