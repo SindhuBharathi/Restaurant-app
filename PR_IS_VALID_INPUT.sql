@@ -4,7 +4,7 @@ USE `restaurant`$$
 
 DROP PROCEDURE IF EXISTS `PR_IS_VALID_INPUT`$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `PR_IS_VALID_INPUT`(IN in_seat_name VARCHAR(3), IN in_item_name MEDIUMTEXT, IN in_item_qty MEDIUMTEXT, OUT out_msg VARCHAR(70))
+CREATE DEFINER=`root`@`localhost` PROCEDURE `PR_IS_VALID_INPUT`(IN in_seat_name VARCHAR(3), IN in_item_name MEDIUMTEXT, IN in_item_qty MEDIUMTEXT)
 BEGIN
 	DECLARE name_next TEXT DEFAULT NULL;
 	DECLARE name_nextlen INT DEFAULT NULL;
@@ -24,7 +24,7 @@ BEGIN
 	IF (FN_IS_VALID_TIME()) THEN
 -- to check the inputs are valid
 		IF (LENGTH(in_seat_name)=0) OR (LENGTH(in_item_name)=0) OR (LENGTH(in_item_qty)=0) OR (in_seat_name=' ') OR (in_item_name=' ') OR (in_item_qty=' ') THEN
-			SET out_msg='Invalid input given';
+			SELECT 'Invalid input given' AS comments;
 		ELSE
 -- to check the seat given is valid
 			IF (FN_IS_VALID_SEAT(in_seat_name)) THEN
@@ -32,12 +32,12 @@ BEGIN
 				SET var_seat_id=FN_GET_SEAT_ID(in_seat_name);
 				IF (FN_IS_VALID_SEAT_AVAILABLE(var_seat_id)) THEN
 -- to check the count of distinct items is 5		
---					start transaction;
+					START TRANSACTION;
 						UPDATE SEAT SET STATUS=0 WHERE ID=var_seat_id;
 						INSERT INTO ORDER_INFO (SEAT_ID) VALUES (var_seat_id);
---					commit;
+					COMMIT;
 					SET var_order_id=FN_GET_ORDER_ID();
-					SET out_msg=CONCAT('Your Order id is ',var_order_id);
+					SELECT CONCAT('Your Order id is ',var_order_id) AS comments;
 				/* Seperates the items given in the string and store it in a table */
 					DROP TABLE IF EXISTS tab_given_order; 
 					CREATE TEMPORARY TABLE IF NOT EXISTS tab_given_order (id INT AUTO_INCREMENT PRIMARY KEY, item_name VARCHAR(20), quantity INT);
@@ -75,46 +75,45 @@ BEGIN
 										IF (FN_IS_VALID_QUANTITY(var_item_id,var_session_id,var_item_qty)) THEN
 --											do sleep(10);
 											CALL PR_ADD_ORDER(var_order_id, var_item_id, var_item_qty);
-											SET out_msg='Served';
+											SELECT CONCAT('Item ',i,' Served') AS comments;
 										ELSE
-											SET out_msg='Item with specified quantity is not available';
+											SELECT 'Item with specified quantity is not available' AS comments;
 										END IF;
 									ELSE
-										SET out_msg='Item specified is unavailable at this session';
+										SELECT 'Item specified is unavailable at this session' AS comments;
 									END IF;
 								ELSE
-									SET out_msg='Invalid quantity is given';
+									SELECT 'Invalid quantity is given' AS comments;
 								END IF;
 							ELSE 
-								SET out_msg='Invalid item given';
+								SELECT 'Invalid item given' AS comments;
 							END IF;
 							SET i=i+1;
 						END WHILE;
 					ELSE
-						SET out_msg='Only 5 items can be placed in an order';
+						SELECT 'Only 5 items can be placed in an order' AS comments;
 					END IF;
 					IF EXISTS(SELECT 1 FROM ORDERS_TRANSACTION WHERE ORDER_ID=var_order_id) THEN
---						START TRANSACTION;
+						START TRANSACTION;
 							UPDATE SEAT SET STATUS=1 WHERE ID=var_seat_id;
 							UPDATE ORDER_INFO SET STATUS='Served' WHERE ID=var_order_id;
---						COMMIT;
+						COMMIT;
 					ELSE
---						START TRANSACTION;
+						START TRANSACTION;
 							UPDATE SEAT SET STATUS=1 WHERE ID=var_seat_id;
 							UPDATE ORDER_INFO SET STATUS='Invalid order' WHERE ID=var_order_id;
---						COMMIT;
+						COMMIT;
 					END IF;
 				ELSE
-					SET out_msg='Sorry given seat is unavailable';
+					SELECT 'Sorry given seat is unavailable' AS comments;
 				END IF;
 			ELSE
-				SET out_msg='Invalid seat name given';
+				SELECT 'Invalid seat name given' AS comments;
 			END IF;
 		END IF;
 	ELSE
-			SET out_msg='Sorry service is not available now';
+			SELECT 'Sorry service is not available now' AS comments;
 	END IF;
 END$$
 
 DELIMITER ;
-
