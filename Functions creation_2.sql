@@ -47,7 +47,7 @@ BEGIN
 	DECLARE var_qty INT;
 	DECLARE var_consumed_qty INT;
 	SELECT QUANTITY INTO var_qty FROM ITEMS_AVAILABLE WHERE ITEM_ID=param_item_id AND SCHEDULE_ID=param_schedule_id;
-	SELECT IFNULL(SUM(QUANTITY),0) INTO var_consumed_qty FROM ORDERS_TRANSACTION WHERE ITEM_ID=param_item_id AND STATUS='Served';
+	SELECT IFNULL(SUM(QUANTITY),0) INTO var_consumed_qty FROM ORDERS_TRANSACTION WHERE ITEM_ID=param_item_id AND DATE(TIME_STAMP)=CURDATE() AND STATUS='Served';
 	IF (var_qty-var_consumed_qty)>=param_quantity THEN
 		SET flag=1;
 	ELSE
