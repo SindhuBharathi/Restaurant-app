@@ -14,11 +14,11 @@ BEGIN
 				IF (FN_IS_DELIVERED(param_order_id)) THEN
 					SET param_msg='An item in the order is served cannot cancel the order';
 				ELSE
---					START TRANSACTION;
+					START TRANSACTION;
 --						UPDATE ORDERS_TRANSACTION SET STATUS='Cancelled', MODIFIED_TIME_STAMP=NOW() WHERE ORDER_ID=param_order_id;
 						UPDATE SEAT SET STATUS=1 WHERE ID=FN_GET_ORDERED_SEAT_ID(param_order_id);
 						UPDATE ORDER_INFO SET STATUS='Cancelled' WHERE ID=param_order_id;
---					COMMIT;	
+					COMMIT;	
 					SET param_msg=CONCAT('All items in order id ',param_order_id,' is cancelled');
 				END IF;
 			ELSE
