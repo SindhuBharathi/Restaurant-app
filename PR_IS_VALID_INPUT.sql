@@ -4,7 +4,7 @@ USE `restaurant`$$
 
 DROP PROCEDURE IF EXISTS `PR_IS_VALID_INPUT`$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `PR_IS_VALID_INPUT`(IN in_seat_name VARCHAR(3), IN in_item_name MEDIUMTEXT, IN in_item_qty MEDIUMTEXT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `PR_IS_VALID_INPUT`(IN in_seat_name VARCHAR(3), IN in_item_name MEDIUMTEXT, IN in_item_qty MEDIUMTEXT, OUT out_msg VARCHAR(70))
 BEGIN
 	DECLARE name_next TEXT DEFAULT NULL;
 	DECLARE name_nextlen INT DEFAULT NULL;
@@ -24,7 +24,7 @@ BEGIN
 	IF (FN_IS_VALID_TIME()) THEN
 -- to check the inputs are valid
 		IF (LENGTH(in_seat_name)=0) OR (LENGTH(in_item_name)=0) OR (LENGTH(in_item_qty)=0) OR (in_seat_name=' ') OR (in_item_name=' ') OR (in_item_qty=' ') THEN
-			SELECT 'Invalid input given' AS comments;
+			SET out_msg='Invalid input given';
 		ELSE
 -- to check the seat given is valid
 			IF (FN_IS_VALID_SEAT(in_seat_name)) THEN
@@ -37,7 +37,7 @@ BEGIN
 						INSERT INTO ORDER_INFO (SEAT_ID) VALUES (var_seat_id);
 					COMMIT;
 					SET var_order_id=FN_GET_ORDER_ID();
-					SELECT CONCAT('Your Order id is ',var_order_id) AS comments;
+					SET out_msg=CONCAT('Your Order id is ',var_order_id);
 				/* Seperates the items given in the string and store it in a table */
 					DROP TABLE IF EXISTS tab_given_order; 
 					CREATE TEMPORARY TABLE IF NOT EXISTS tab_given_order (id INT AUTO_INCREMENT PRIMARY KEY, item_name VARCHAR(20), quantity INT);
@@ -75,23 +75,23 @@ BEGIN
 										IF (FN_IS_VALID_QUANTITY(var_item_id,var_session_id,var_item_qty)) THEN
 --											do sleep(10);
 											CALL PR_ADD_ORDER(var_order_id, var_item_id, var_item_qty);
-											SELECT CONCAT('Item ',i,' Served') AS comments;
+											SET out_msg='Served';
 										ELSE
-											SELECT 'Item with specified quantity is not available' AS comments;
+											SET out_msg='Item with specified quantity is not available';
 										END IF;
 									ELSE
-										SELECT 'Item specified is unavailable at this session' AS comments;
+										SET out_msg='Item specified is unavailable at this session';
 									END IF;
 								ELSE
-									SELECT 'Invalid quantity is given' AS comments;
+									SET out_msg='Invalid quantity is given';
 								END IF;
 							ELSE 
-								SELECT 'Invalid item given' AS comments;
+								SET out_msg='Invalid item given';
 							END IF;
 							SET i=i+1;
 						END WHILE;
 					ELSE
-						SELECT 'Only 5 items can be placed in an order' AS comments;
+						SET out_msg='Only 5 items can be placed in an order';
 					END IF;
 					IF EXISTS(SELECT 1 FROM ORDERS_TRANSACTION WHERE ORDER_ID=var_order_id) THEN
 						START TRANSACTION;
@@ -105,14 +105,14 @@ BEGIN
 						COMMIT;
 					END IF;
 				ELSE
-					SELECT 'Sorry given seat is unavailable' AS comments;
+					SET out_msg='Sorry given seat is unavailable';
 				END IF;
 			ELSE
-				SELECT 'Invalid seat name given' AS comments;
+				SET out_msg='Invalid seat name given';
 			END IF;
 		END IF;
 	ELSE
-			SELECT 'Sorry service is not available now' AS comments;
+			SET out_msg='Sorry service is not available now';
 	END IF;
 END$$
 
